@@ -4,11 +4,13 @@ const cors = require('cors');
 const connectDB = require('./config/db'); // Import the function from db.js
 const registerRoute = require('./routes/registerRoute');
 const loginRoute = require('./routes/loginRoute');
-
-const app = express();
+const accountRoutes = require('./routes/accountRoute');
+const platformValidationRoute = require('./routes/platformValidationRoute');
 
 // Middleware
+const app = express();
 app.use(express.json());
+app.use('/uploads', express.static('uploads'));
 
 // Enable CORS (allow requests from your frontend domain)
 app.use(cors({
@@ -20,6 +22,8 @@ app.use(cors({
 // Routes
 app.use('/api/auth', registerRoute);
 app.use('/api/auth', loginRoute);
+app.use('/api/account', accountRoutes);
+app.use('/api', platformValidationRoute);
 
 // Connect to MongoDB
 connectDB();

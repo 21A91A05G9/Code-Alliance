@@ -26,7 +26,9 @@ const RegisterScreen = ({ navigation }) => {
     }
 
     try {
-      const response = await fetch('http://192.168.1.18:5000/api/auth/register', {
+      console.log("Please Register..!")
+      const response = await fetch('http://localhost:5000/api/auth/register', {
+
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -41,8 +43,10 @@ const RegisterScreen = ({ navigation }) => {
           },
         }),
       });
-  
+      
       const data = await response.json();
+
+      console.log("Got response..!")
   
       if (response.ok) {
         Alert.alert("Success", data.message);
@@ -53,9 +57,7 @@ const RegisterScreen = ({ navigation }) => {
     } catch (error) {
       Alert.alert("Error", "Something went wrong. Please try again later.");
     }
-    // Add registration logic here (e.g., API call)
-    Alert.alert("Success", "Registration completed.");
-    navigation.navigate("Login"); // Navigate to Login Screen
+  
   };
 
   return (
