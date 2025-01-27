@@ -7,7 +7,10 @@ const {
 const validateUsername = async (req, res) => {
     const { username, platform } = req.body;
 
+    console.log("Request received:", { username, platform });
+
     if (!username || !platform) {
+        console.log("Validation failed: Missing username or platform");
         return res.status(400).json({ error: "Username and platform are required" });
     }
 
@@ -15,24 +18,32 @@ const validateUsername = async (req, res) => {
         let validUser = false;
 
         if (platform === "LeetCode") {
+            console.log("Validating LeetCode user:", username);
             validUser = await validateLeetCodeUser(username);
         } else if (platform === "GeeksForGeeks") {
-            validUser = await validateGFGUser(username);
+            console.log("Validating GFG user:", username);
+            validUser = await validateGFGUser(username); // Call and return result
         } else if (platform === "CodeChef") {
+            console.log("Validating CodeChef user:", username);
             validUser = await validateCodeChefUser(username);
         }
 
+        console.log("Validation result:", validUser);
+
         if (validUser) {
-            res.json({ validUser: true });
+            return res.json(validUser);
         } else {
-            res.json({
+            return res.status(400).json({
                 validUser: false,
                 error: "Invalid username for this platform",
             });
         }
     } catch (error) {
-        res.status(500).json({ error: "Internal server error", details: error.message });
+        console.error("Error in validateUsername:", error); // Log the error
+        return res.status(500).json({ error: "Internal server error", details: error.message });
     }
 };
+
+
 
 module.exports = validateUsername;

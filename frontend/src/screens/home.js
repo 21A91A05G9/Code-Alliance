@@ -1,5 +1,15 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Image, Modal, TextInput, Alert } from "react-native";
+import {
+    View,
+    Text,
+    StyleSheet,
+    TouchableOpacity,
+    ScrollView,
+    Image,
+    Modal,
+    TextInput,
+    Alert,
+} from "react-native";
 import Ionicons from "react-native-vector-icons/Ionicons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import leet from "../images/leet.png";
@@ -8,63 +18,66 @@ import chef from "../images/chef.jpeg";
 import axios from "axios";
 
 const HomeScreen = ({ navigation }) => {
-    const [leetUsername, setLeetUsername] = useState('');
-    const [gfgUsername, setGfgUsername] = useState('');
-    const [chefUsername, setChefUsername] = useState('');
+    const [leetUsername, setLeetUsername] = useState("");
+    const [gfgUsername, setGfgUsername] = useState("");
+    const [chefUsername, setChefUsername] = useState("");
     const [editModalVisible, setEditModalVisible] = useState(false);
-    const [currentUsername, setCurrentUsername] = useState('');
-    const [platformToEdit, setPlatformToEdit] = useState('');
+    const [currentUsername, setCurrentUsername] = useState("");
+    const [platformToEdit, setPlatformToEdit] = useState("");
 
     // Fetch saved usernames from AsyncStorage
     useEffect(() => {
         const fetchUsernames = async () => {
-            const leet = await AsyncStorage.getItem("leetUsername");
-            const gfg = await AsyncStorage.getItem("gfgUsername");
-            const chef = await AsyncStorage.getItem("chefUsername");
+            try {
+                const leet = await AsyncStorage.getItem("leetUsername");
+                const gfg = await AsyncStorage.getItem("gfgUsername");
+                const chef = await AsyncStorage.getItem("chefUsername");
 
-            setLeetUsername(leet || ''); // Default to empty if not set
-            setGfgUsername(gfg || '');
-            setChefUsername(chef || '');
+                setLeetUsername(leet || ""); // Default to empty if not set
+                setGfgUsername(gfg || "");
+                setChefUsername(chef || "");
+            } catch (error) {
+                console.error("Error fetching usernames:", error);
+            }
         };
 
         fetchUsernames();
     }, []);
 
     const openChatbot = () => {
-        alert("Chatbot button clicked!");
-        navigation.navigate("chatBot"); // Replace this with your chatbot functionality
+        Alert.alert("Chatbot", "Chatbot button clicked!");
+        navigation.navigate("chatBot");
     };
 
     const openEditModal = (platform) => {
         setPlatformToEdit(platform);
-        if (platform === "LeetCode") {
-            setCurrentUsername(leetUsername);
-        } else if (platform === "GeeksForGeeks") {
-            setCurrentUsername(gfgUsername);
-        } else if (platform === "CodeChef") {
-            setCurrentUsername(chefUsername);
-        }
+        setCurrentUsername(
+            platform === "LeetCode"
+                ? leetUsername
+                : platform === "GeeksForGeeks"
+                ? gfgUsername
+                : chefUsername
+        );
         setEditModalVisible(true);
     };
 
     const saveUsername = async () => {
-        if (!currentUsername) {
-            alert("Username cannot be empty!");
+        if (!currentUsername.trim()) {
+            Alert.alert("Validation Error", "Username cannot be empty!");
             return;
         }
     
-        // Choose the API endpoint based on the platform
-       
-    
         try {
-            // Send to backend to check if the username is valid for the respective platform
-            const response = await axios.post("http://localhost:5000/validate-username", {
+            const response = await axios.post("http://localhost:5000/api/validate-username", {
                 username: currentUsername,
-                platform: platformToEdit,  // Pass the platform as well
+                platform: platformToEdit,
             });
     
+            console.log("Response:", response);
+    
             if (response.data.validUser) {
-                // Save valid username in AsyncStorage
+                console.log("Success:", response.data);
+                // Save the username in AsyncStorage
                 if (platformToEdit === "LeetCode") {
                     await AsyncStorage.setItem("leetUsername", currentUsername);
                     setLeetUsername(currentUsername);
@@ -77,13 +90,13 @@ const HomeScreen = ({ navigation }) => {
                 }
     
                 setEditModalVisible(false);
-                alert(`${platformToEdit} Username updated successfully!`);
+                Alert.alert("Success", `${platformToEdit} username updated successfully!`);
             } else {
-                alert("Invalid Username. Please check and try again.");
+                Alert.alert("Validation Error", response.data.error || "Invalid Username. Please try again.");
             }
         } catch (error) {
-            console.error(error);
-            alert("Error occurred while saving username.");
+            console.error("Error saving username:", error);
+            Alert.alert("Error", "Failed to validate username. Please try again later.");
         }
     };
     
@@ -91,80 +104,42 @@ const HomeScreen = ({ navigation }) => {
     return (
         <View style={styles.container}>
             <ScrollView contentContainerStyle={styles.container}>
-                {/* Features Section */}
                 <View style={styles.featuresSection}>
                     <Text style={styles.featuresTitle}>View Profiles</Text>
-
                     <View style={styles.featureCards}>
-                        {/* LeetCode Card */}
-                        <View style={styles.card}>
-                            <Image source={leet} style={styles.cardImage} />
-                            <Text style={styles.cardText}>LeetCode</Text>
-                            <View style={styles.cardButtons}>
-                                <TouchableOpacity
-                                    style={styles.cardButton}
-                                    onPress={() => alert("LeetCode Profile Clicked")}
-                                >
-                                    <Text style={styles.cardButtonText}>View</Text>
-                                </TouchableOpacity>
-                                <TouchableOpacity
-                                    style={[styles.cardButton, styles.secondaryButton]}
-                                    onPress={() => openEditModal("LeetCode")}
-                                >
-                                    <Text style={styles.cardButtonText}>Edit</Text>
-                                </TouchableOpacity>
-                            </View>
-                        </View>
-
-                        {/* GFG Card */}
-                        <View style={styles.card}>
-                            <Image source={geek} style={styles.cardImage} />
-                            <Text style={styles.cardText}>GeeksForGeeks</Text>
-                            <View style={styles.cardButtons}>
-                                <TouchableOpacity
-                                    style={styles.cardButton}
-                                    onPress={() => alert("GFG Profile Clicked")}
-                                >
-                                    <Text style={styles.cardButtonText}>View</Text>
-                                </TouchableOpacity>
-                                <TouchableOpacity
-                                    style={[styles.cardButton, styles.secondaryButton]}
-                                    onPress={() => openEditModal("GeeksForGeeks")}
-                                >
-                                    <Text style={styles.cardButtonText}>Edit</Text>
-                                </TouchableOpacity>
-                            </View>
-                        </View>
-
-                        {/* CodeChef Card */}
-                        <View style={styles.card}>
-                            <Image source={chef} style={styles.cardImage} />
-                            <Text style={styles.cardText}>CodeChef</Text>
-                            <View style={styles.cardButtons}>
-                                <TouchableOpacity
-                                    style={styles.cardButton}
-                                    onPress={() => alert("CodeChef Profile Clicked")}
-                                >
-                                    <Text style={styles.cardButtonText}>View</Text>
-                                </TouchableOpacity>
-                                <TouchableOpacity
-                                    style={[styles.cardButton, styles.secondaryButton]}
-                                    onPress={() => openEditModal("CodeChef")}
-                                >
-                                    <Text style={styles.cardButtonText}>Edit</Text>
-                                </TouchableOpacity>
-                            </View>
-                        </View>
+                        {/* Platform Cards */}
+                        {[{ name: "LeetCode", image: leet, username: leetUsername },
+                          { name: "GeeksForGeeks", image: geek, username: gfgUsername },
+                          { name: "CodeChef", image: chef, username: chefUsername }]
+                            .map(({ name, image, username }) => (
+                                <View style={styles.card} key={name}>
+                                    <Image source={image} style={styles.cardImage} />
+                                    <Text style={styles.cardText}>{name}</Text>
+                                    <View style={styles.cardButtons}>
+                                        <TouchableOpacity
+                                            style={styles.cardButton}
+                                            onPress={() => Alert.alert(`${name} Profile`, `Username: ${username || "Not Set"}`)}
+                                        >
+                                            <Text style={styles.cardButtonText}>View</Text>
+                                        </TouchableOpacity>
+                                        <TouchableOpacity
+                                            style={[styles.cardButton, styles.secondaryButton]}
+                                            onPress={() => openEditModal(name)}
+                                        >
+                                            <Text style={styles.cardButtonText}>Edit</Text>
+                                        </TouchableOpacity>
+                                    </View>
+                                </View>
+                            ))}
                     </View>
                 </View>
             </ScrollView>
 
-            {/* Chatbot Button */}
             <TouchableOpacity style={styles.chatbotButton} onPress={openChatbot}>
                 <Ionicons name="chatbubble-ellipses-outline" size={30} color="white" />
             </TouchableOpacity>
 
-            {/* Modal to edit username */}
+            {/* Modal for Editing Username */}
             <Modal
                 visible={editModalVisible}
                 animationType="slide"
@@ -178,6 +153,7 @@ const HomeScreen = ({ navigation }) => {
                             style={styles.modalInput}
                             value={currentUsername}
                             onChangeText={setCurrentUsername}
+                            placeholder={`Enter your ${platformToEdit} username`}
                         />
                         <TouchableOpacity style={styles.saveButton} onPress={saveUsername}>
                             <Text style={styles.saveButtonText}>Save</Text>
@@ -194,6 +170,7 @@ const HomeScreen = ({ navigation }) => {
         </View>
     );
 };
+
 
 const styles = StyleSheet.create({
     container: {
