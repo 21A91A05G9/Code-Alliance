@@ -6,6 +6,7 @@ const registerRoute = require('./routes/registerRoute');
 const loginRoute = require('./routes/loginRoute');
 const accountRoutes = require('./routes/accountRoute');
 const platformValidationRoute = require('./routes/platformValidationRoute');
+const contestDetailsRoute = require('./routes/contestDetailsRoute');
 
 // Middleware
 const app = express();
@@ -24,6 +25,7 @@ app.use('/api/auth', registerRoute);
 app.use('/api/auth', loginRoute);
 app.use('/api/account', accountRoutes);
 app.use('/api', platformValidationRoute);
+app.use('/api', contestDetailsRoute);
 
 // Connect to MongoDB
 connectDB();

@@ -185,16 +185,53 @@ const validateGFGUser = async (username) => {
 
 
 
-// Validate CodeChef User
-const validateCodeChefUser = async (username) => {
+const validateCodeChefUser= async (username) => {
     try {
-        const response = await axios.get(`https://api.codechef.com/users/${username}`);
-        return response.data.exists; // Assume the API has an `exists` field
+        if (!username) {
+            return { validUser: false, message: "Username is required" };
+        }
+
+        // Construct the CodeChef profile URL
+        const url = `https://www.codechef.com/users/${username}`;
+
+        // Fetch the HTML content of the profile page
+        const { data } = await axios.get(url);
+
+        // Load HTML into Cheerio
+        const $ = cheerio.load(data);
+
+        // Extract user information from the profile page
+        let rating = $(".rating-number").text().trim() || "N/A";
+        let stars = $(".rating-star").text().trim() || "N/A";
+        let globalRank = $(".rating-ranks .inline-list span").first().text().trim() || "N/A";
+        let countryRank = $(".rating-ranks .inline-list span").eq(2).text().trim() || "N/A";
+
+        // Extract number of problems solved
+        let problemsSolved = $(".problems-solved .content p").first().text().trim() || "0";
+
+        // Return extracted details
+        return {
+            validUser: true,
+            data: {
+                username: username,
+                rating: rating,
+                stars: stars,
+                globalRank: globalRank,
+                countryRank: countryRank,
+                problemsSolved: problemsSolved,
+            },
+        };
     } catch (error) {
-        console.error("Error validating CodeChef user:", error);
-        return false;
+        console.error("Error:", error);
+        return {
+            validUser: false,
+            message: "User not found or an error occurred.",
+            error: error.message,
+        };
     }
 };
+
+
 
 module.exports = {
     validateLeetCodeUser,

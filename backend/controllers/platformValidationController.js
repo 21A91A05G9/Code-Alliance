@@ -3,9 +3,10 @@ const {
     validateGFGUser,
     validateCodeChefUser,
 } = require('../services/platformValidationService');
+const User = require("../models/UserDetails");
 
 const validateUsername = async (req, res) => {
-    const { username, platform } = req.body;
+    const { username, platform, userId } = req.body;
 
     console.log("Request received:", { username, platform });
 
@@ -30,14 +31,33 @@ const validateUsername = async (req, res) => {
 
         console.log("Validation result:", validUser);
 
-        if (validUser) {
-            return res.json(validUser);
-        } else {
+        if (!validUser) {
             return res.status(400).json({
                 validUser: false,
-                error: "Invalid username for this platform",
+                error: "Invalid username for this platform.",
             });
         }
+        else {
+            try {
+                const updateField = `codingProfiles.${platform.toLowerCase()}.username`;
+        
+                const updatedUser = await User.findByIdAndUpdate(
+                    userId,
+                    { $set: { [updateField]: username } },
+                    { new: true }
+                );
+        
+                if (!updatedUser) {
+                    throw new Error("User not found");
+                }
+        
+                return updatedUser;
+            } catch (error) {
+                console.error("🔥 MongoDB Update Error:", error);
+                throw error;
+            }
+        }
+      
     } catch (error) {
         console.error("Error in validateUsername:", error); // Log the error
         return res.status(500).json({ error: "Internal server error", details: error.message });

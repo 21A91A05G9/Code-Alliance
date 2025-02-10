@@ -25,7 +25,7 @@ const userSchema = new mongoose.Schema({
     codechef: {
       username: { type: String, trim: true, default: '' },
     },
-    geekforgeeks: {
+    geeksforgeeks: {
       username: { type: String, trim: true, default: '' },
     },
   },
