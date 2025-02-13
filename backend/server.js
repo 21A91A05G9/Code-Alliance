@@ -7,7 +7,7 @@ const loginRoute = require('./routes/loginRoute');
 const accountRoutes = require('./routes/accountRoute');
 const platformValidationRoute = require('./routes/platformValidationRoute');
 const contestDetailsRoute = require('./routes/contestDetailsRoute');
-
+const userRoute = require('./routes/userRoute')
 // Middleware
 const app = express();
 app.use(express.json());
@@ -24,8 +24,10 @@ app.use(cors({
 app.use('/api/auth', registerRoute);
 app.use('/api/auth', loginRoute);
 app.use('/api/account', accountRoutes);
-app.use('/api', platformValidationRoute);
-app.use('/api', contestDetailsRoute);
+app.use('/api/platform', platformValidationRoute);
+app.use('/api/platform', contestDetailsRoute);
+app.use("/api/profile", userRoute);
+
 
 // Connect to MongoDB
 connectDB();

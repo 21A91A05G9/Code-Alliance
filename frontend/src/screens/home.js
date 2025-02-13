@@ -71,11 +71,12 @@ const HomeScreen = ({ navigation }) => {
         try {
             const userInfo = await AsyncStorage.getItem("userInfo");
             const user = JSON.parse(userInfo);
+            console.log(user)
             
-            const response = await axios.post("http://localhost:5000/api/validate-username", {
+            const response = await axios.post("http://localhost:5000/api/platform/validate-username", {
                 username: currentUsername,
                 platform: platformToEdit,
-                userId: user.userId,
+                userId: user._id,
             });
     
             console.log("Response:", response);

@@ -18,6 +18,21 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
+  location: {
+    type: String,
+    trim: true,
+    default: '',
+  },
+  profession: {
+    type: String,
+    trim: true,
+    default: '',
+  },
+  phone: {
+    type: String,
+    trim: true,
+    default: '',
+  },
   codingProfiles: {
     leetcode: {
       username: { type: String, trim: true, default: '' },

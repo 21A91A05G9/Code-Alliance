@@ -9,68 +9,39 @@ import {
   Modal,
   TextInput,
   Button,
-  ActivityIndicator,
 } from "react-native";
 import Ionicons from "react-native-vector-icons/Ionicons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { launchImageLibrary } from 'react-native-image-picker';
-
+import { launchImageLibrary } from "react-native-image-picker";
+import axios from "axios";
 
 const AccountSettingsScreen = ({ navigation }) => {
-  const [isLoading, setIsLoading] = useState(true);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [modalTitle, setModalTitle] = useState("");
   const [inputValue, setInputValue] = useState("");
   const [userData, setUserData] = useState({
-    userId: "",
+    _id: "",
     username: "",
     email: "",
-    password: "********", 
+    password: "********",
   });
   const [profilePicture, setProfilePicture] = useState("https://via.placeholder.com/150");
-
 
   useEffect(() => {
     const fetchUserData = async () => {
       try {
-        // Fetch the userId from AsyncStorage
         const userInfo = await AsyncStorage.getItem("userInfo");
-        const user = JSON.parse(userInfo);
-
-        console.log("Retrieved User Info:", user);  
-
-        if (user) {
-          // Use the userId to fetch the user details from the backend
-          const response = await fetch(`http://localhost:5000/api/account/fetchDetails/${user.userId}`, {
-            method: "GET",
-            headers: { "Content-Type": "application/json" },
-          });
-
-          const data = await response.json();
-          console.log(data);
-          if (response.ok) {
-            setUserData({
-              userId: data.userId,
-              username: data.username,
-              email: data.email,
-              password: "********", // Keep masked
-            });
-          } else {
-            Alert.alert("Error", data.message || "Failed to fetch user data.");
-          }
-        } else {
-          Alert.alert("Error", "User ID not found in AsyncStorage.");
+        if (userInfo) {
+          const user = JSON.parse(userInfo);
+          setUserData(user);
         }
       } catch (error) {
-        console.error("Error fetching user data:", error);
-        Alert.alert("Error", "Unable to load user data. Please try again.");
-      } finally {
-        setIsLoading(false);
+        console.error("Error retrieving user data:", error);
       }
     };
 
     fetchUserData();
-  }, []); // Run once when the component mounts
+  }, []);
 
   const handleOpenModal = (title, currentValue) => {
     setModalTitle(title);
@@ -82,94 +53,80 @@ const AccountSettingsScreen = ({ navigation }) => {
     try {
       const endpoint =
         modalTitle === "Username"
-          ? "/api/account/username"
+          ? "/account/username"
           : modalTitle === "Email"
-          ? "/api/account/email"
-          : "/api/account/password";
-
-      const body =
-        modalTitle === "Password"
-          ? { userId: userData.userId, currentPassword: "current_password", newPassword: inputValue }
-          : { userId: userData.userId, [`new${modalTitle}`]: inputValue };
-
-      const response = await fetch(`http://localhost:5000${endpoint}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
+          ? "/account/email"
+          : "/account/password";
+  
+      const body = { userId: userData._id, [`new${modalTitle}`]: inputValue };
+  
+      const response = await axios.put(`http://localhost:5000/api${endpoint}`, body);
+  
+      if (response.status === 200) {
         Alert.alert("Success", `${modalTitle} updated successfully.`);
-        setUserData((prevData) => ({
-          ...prevData,
+  
+        const updatedUserData = {
+          ...userData,
           [modalTitle.toLowerCase()]: modalTitle === "Password" ? "********" : inputValue,
-        }));
+        };
+  
+        // Update state
+        setUserData(updatedUserData);
+  
+        // Store updated data in AsyncStorage
+        await AsyncStorage.setItem("userInfo", JSON.stringify(updatedUserData));
       } else {
-        Alert.alert("Error", data.message);
+        Alert.alert("Error", response.data.message);
       }
     } catch (error) {
+      console.error("Error updating user info:", error);
       Alert.alert("Error", "Something went wrong.");
     }
     setIsModalVisible(false);
   };
   
-  
   const handleChangePicture = async () => {
-    // try {
-    //   const result = await launchImageLibrary({
-    //     mediaType: 'photo',
-    //     quality: 1,
-    //     includeBase64: false, // Ensure you get a file URI (not base64)
-    //   });
-  
-    //   if (!result.didCancel && result.assets && result.assets.length > 0) {
-    //     const imageUri = result.assets[0].uri;
-    //     console.log('Selected Image URI:', imageUri);
-  
-    //     const fileType = result.assets[0].type || 'image/jpeg';
-  
-    //     const formData = new FormData();
-    //     formData.append('profilePicture', {
-    //       uri: imageUri,
-    //       type: fileType, // Dynamically set the file type based on the selected image
-    //       name: 'profile.jpg', // Ensure a valid file name
-    //     });
-    //     formData.append('userId', userData.userId);
-  
-    //     const response = await fetch('http://localhost:5000/api/account/profile-picture', {
-    //       method: 'PUT',
-    //       body: formData, // Send the FormData object with the image file
-    //     });
-  
-    //     const data = await response.json();
-  
-    //     if (response.ok) {
-    //       Alert.alert('Success', 'Profile picture updated successfully.');
-    //       setProfilePicture(data.profilePicture); // Update the UI with the new image
-    //     } else {
-    //       Alert.alert('Error', data.message || 'Failed to update profile picture.');
-    //     }
-    //   }
-    // } catch (error) {
-    //   console.error('Error updating profile picture:', error);
-    //   Alert.alert('Error', 'Failed to change profile picture.');
-    // }
+    try {
+      const result = await launchImageLibrary({
+        mediaType: "photo",
+        quality: 1,
+        includeBase64: false,
+      });
+
+      if (!result.didCancel && result.assets && result.assets.length > 0) {
+        const imageUri = result.assets[0].uri;
+        console.log("Selected Image URI:", imageUri);
+
+        const fileType = result.assets[0].type || "image/jpeg";
+
+        const formData = new FormData();
+        formData.append("profilePicture", {
+          uri: imageUri,
+          type: fileType,
+          name: "profile.jpg",
+        });
+        formData.append("userId", userData._id);
+
+        const response = await axios.put(
+          "http://localhost:5000/api/account/profile-picture",
+          formData,
+          {
+            headers: { "Content-Type": "multipart/form-data" },
+          }
+        );
+
+        if (response.status === 200) {
+          Alert.alert("Success", "Profile picture updated successfully.");
+          setProfilePicture(response.data.profilePicture);
+        } else {
+          Alert.alert("Error", response.data.message || "Failed to update profile picture.");
+        }
+      }
+    } catch (error) {
+      console.error("Error updating profile picture:", error);
+      Alert.alert("Error", "Failed to change profile picture.");
+    }
   };
-  
-  
-
-  
-
-
-  if (isLoading) {
-    return (
-      <View style={styles.loaderContainer}>
-        <ActivityIndicator size="large" color="#007BFF" />
-      </View>
-    );
-  }
 
   return (
     <View style={styles.container}>
@@ -204,7 +161,7 @@ const AccountSettingsScreen = ({ navigation }) => {
       {/* Password */}
       <View style={styles.settingItem}>
         <Ionicons name="lock-closed-outline" size={24} color="#007BFF" />
-        <Text style={styles.settingText}>{userData.password}</Text>
+        <Text style={styles.settingText}>{"*********"}</Text>
         <TouchableOpacity onPress={() => handleOpenModal("Password", "********")}>
           <Ionicons name="create-outline" size={20} color="rgb(26, 152, 254)" />
         </TouchableOpacity>
@@ -232,6 +189,7 @@ const AccountSettingsScreen = ({ navigation }) => {
     </View>
   );
 };
+
 
 const styles = StyleSheet.create({
   container: {
